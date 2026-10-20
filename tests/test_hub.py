@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest.mock import Mock
 
 from cookie_hub.app import Credential, create_app
-from hub_client import HubClient, HubRestricted, login_from_hub, protect_session
+from hub_client import HubClient, HubRestricted, login_from_hub, protect_session, install_hub_login
 
 
 CONFIG = {
@@ -111,6 +111,20 @@ class VaultTests(unittest.TestCase):
 
 
 class ClientTests(unittest.TestCase):
+    def test_legacy_saved_tokens_cannot_skip_hub(self):
+        class Account:
+            def __init__(self):
+                self.session = Mock()
+                self.token_eaag = "old"
+                self.token_eaat = "old"
+                self.cookie_dict = {"c_user": "old"}
+        install_hub_login(Account, Mock())
+        account = Account()
+        self.assertIsNone(account.token_eaag)
+        self.assertIsNone(account.token_eaat)
+        self.assertEqual(account.cookie_dict, {})
+        account.session.cookies.clear.assert_called_once()
+
     def test_restriction_prevents_next_cookie(self):
         account = Mock()
         account._verify.side_effect = HubRestricted("368")
