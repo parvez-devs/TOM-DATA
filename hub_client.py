@@ -180,3 +180,19 @@ def login_from_hub(account, hub):
         "No session verified. Add a valid own-account access token in the hub "
         "or run your original script for manual login."
     )
+
+
+def install_hub_login(account_class, hub):
+    original_init = account_class.__init__
+
+    def initialize(self, *args, **kwargs):
+        original_init(self, *args, **kwargs)
+        # Legacy menus sometimes verify cached tokens directly instead of
+        # calling check(). Force their existing login path through the hub.
+        self.token_eaag = self.token_eaat = None
+        self.cookie_dict = {}
+        self.session.cookies.clear()
+
+    account_class.__init__ = initialize
+    account_class.check = lambda self: login_from_hub(self, hub)
+    account_class.login = account_class.check
