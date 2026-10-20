@@ -6,7 +6,7 @@ import runpy
 from getpass import getpass
 from pathlib import Path
 
-from hub_client import HubClient, HubError, HubRestricted, login_from_hub
+from hub_client import HubClient, HubError, HubRestricted, install_hub_login
 
 
 def main():
@@ -28,9 +28,7 @@ def main():
     account_class, menu = namespace.get("auth"), namespace.get("menu")
     if not isinstance(account_class, type) or not callable(menu):
         raise HubError("Script must expose its existing auth class and menu function")
-    account_class.check = lambda self: login_from_hub(self, hub)
-    # Prevent a legacy menu from bypassing the vault through auth.login.
-    account_class.login = account_class.check
+    install_hub_login(account_class, hub)
     menu()
 
 
